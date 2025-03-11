@@ -14,20 +14,20 @@
         function getQueryParams() {
             const params = new URLSearchParams(window.location.search);
             return {
-                referencia: parseFloat(params.get("referencia")) || 0,
+                referencia: parseFloat(params.get("Valor de referencia")) || 0,
                 datos: [
-                    parseFloat(params.get("enero")) || 0,
-                    parseFloat(params.get("febrero")) || 0,
-                    parseFloat(params.get("marzo")) || 0,
-                    parseFloat(params.get("abril")) || 0,
-                    parseFloat(params.get("mayo")) || 0,
-                    parseFloat(params.get("junio")) || 0,
-                    parseFloat(params.get("julio")) || 0,
-                    parseFloat(params.get("agosto")) || 0,
-                    parseFloat(params.get("septiembre")) || 0,
-                    parseFloat(params.get("octubre")) || 0,
-                    parseFloat(params.get("noviembre")) || 0,
-                    parseFloat(params.get("diciembre")) || 0
+                    parseFloat(params.get("Enero")) || 0,
+                    parseFloat(params.get("Febrero")) || 0,
+                    parseFloat(params.get("Marzo")) || 0,
+                    parseFloat(params.get("Abril")) || 0,
+                    parseFloat(params.get("Mayo")) || 0,
+                    parseFloat(params.get("Junio")) || 0,
+                    parseFloat(params.get("Julio")) || 0,
+                    parseFloat(params.get("Agosto")) || 0,
+                    parseFloat(params.get("Septiembre")) || 0,
+                    parseFloat(params.get("Octubre")) || 0,
+                    parseFloat(params.get("Noviembre")) || 0,
+                    parseFloat(params.get("Diciembre")) || 0
                 ]
             };
         }
