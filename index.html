@@ -6,8 +6,8 @@
     <title>Gráfica de Registros Mensuales</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body>
-    <canvas id="myChart"></canvas>
+<body style="display: flex; justify-content: center; align-items: center; height: 100vh; background: #f4f4f4; margin: 0;">
+    <canvas id="myChart" width="400" height="200"></canvas>
 
     <script>
         // Función para obtener los valores desde la URL
@@ -35,26 +35,80 @@
         // Obtener datos desde la URL
         const params = getQueryParams();
         const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+        const referenciaArray = new Array(12).fill(params.referencia); // Crea una línea horizontal con el valor de referencia
 
-        // Crear la gráfica
+        // Crear un degradado de color para la gráfica
+        function createGradient(ctx, chartArea) {
+            const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+            gradient.addColorStop(0, "rgba(0, 123, 255, 0.5)");  // Azul claro
+            gradient.addColorStop(1, "rgba(0, 123, 255, 0.1)");  // Azul más transparente
+            return gradient;
+        }
+
         const ctx = document.getElementById("myChart").getContext("2d");
-        new Chart(ctx, {
+
+        // Crear la gráfica con un diseño moderno y la línea de referencia
+        const myChart = new Chart(ctx, {
             type: "line",
             data: {
                 labels: meses,
-                datasets: [{
-                    label: "Registros Mensuales",
-                    data: params.datos,
-                    borderColor: "blue",
-                    backgroundColor: "rgba(0, 0, 255, 0.2)",
-                    fill: true
-                }]
+                datasets: [
+                    {
+                        label: "Registros Mensuales",
+                        data: params.datos,
+                        borderColor: "#007bff",
+                        backgroundColor: (ctx) => createGradient(ctx.chart.ctx, ctx.chart.chartArea),
+                        fill: true,
+                        borderWidth: 3,
+                        pointRadius: 5,
+                        pointBackgroundColor: "#007bff",
+                        pointBorderColor: "#fff",
+                        tension: 0.3 // Hace la línea más curva y suave
+                    },
+                    {
+                        label: "Valor de Referencia",
+                        data: referenciaArray,
+                        borderColor: "#ff4d4d", // Rojo fuerte
+                        borderWidth: 2,
+                        borderDash: [8, 5], // Hace la línea punteada
+                        pointRadius: 0, // No mostrar puntos en la línea de referencia
+                        fill: false
+                    }
+                ]
             },
             options: {
+                plugins: {
+                    legend: {
+                        labels: {
+                            font: {
+                                size: 14
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return `${context.dataset.label}: ${context.raw}`;
+                            }
+                        }
+                    }
+                },
                 scales: {
                     y: {
                         beginAtZero: false,
-                        suggestedMin: params.referencia // Comienza desde la referencia del año anterior
+                        suggestedMin: params.referencia * 0.8, // Ajusta la escala para una mejor visualización
+                        ticks: {
+                            font: {
+                                size: 14
+                            }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: {
+                                size: 12
+                            }
+                        }
                     }
                 }
             }
@@ -62,4 +116,3 @@
     </script>
 </body>
 </html>
-
