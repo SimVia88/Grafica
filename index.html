@@ -10,89 +10,56 @@
     <canvas id="myChart"></canvas>
 
     <script>
-        // API de Adalo
-        const API_URL = "https://api.adalo.com/v0/apps/02fb6ce2-46c4-4626-a4f6-a7747f66a2f0/collections/t_9l6kxc352ufl5bg89ag5j9etw";
-        const API_KEY = "uTihLh3enT2BN5A";  // Reemplaza con tu clave de API de Adalo
-
-        // Obtener el ID desde la URL
+        // Función para obtener los valores desde la URL
         function getQueryParams() {
             const params = new URLSearchParams(window.location.search);
-            return { id: params.get("id") };
+            return {
+                referencia: parseFloat(params.get("referencia")) || 0,
+                datos: [
+                    parseFloat(params.get("enero")) || 0,
+                    parseFloat(params.get("febrero")) || 0,
+                    parseFloat(params.get("marzo")) || 0,
+                    parseFloat(params.get("abril")) || 0,
+                    parseFloat(params.get("mayo")) || 0,
+                    parseFloat(params.get("junio")) || 0,
+                    parseFloat(params.get("julio")) || 0,
+                    parseFloat(params.get("agosto")) || 0,
+                    parseFloat(params.get("septiembre")) || 0,
+                    parseFloat(params.get("octubre")) || 0,
+                    parseFloat(params.get("noviembre")) || 0,
+                    parseFloat(params.get("diciembre")) || 0
+                ]
+            };
         }
 
-        async function fetchData() {
-            try {
-                const { id } = getQueryParams();
-                if (!id) {
-                    console.error("No se proporcionó un ID en la URL");
-                    return;
-                }
+        // Obtener datos desde la URL
+        const params = getQueryParams();
+        const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
-                const response = await fetch(API_URL, {
-                    headers: {
-                        "Authorization": `Bearer ${API_KEY}`,
-                        "Content-Type": "application/json"
+        // Crear la gráfica
+        const ctx = document.getElementById("myChart").getContext("2d");
+        new Chart(ctx, {
+            type: "line",
+            data: {
+                labels: meses,
+                datasets: [{
+                    label: "Registros Mensuales",
+                    data: params.datos,
+                    borderColor: "blue",
+                    backgroundColor: "rgba(0, 0, 255, 0.2)",
+                    fill: true
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        suggestedMin: params.referencia // Comienza desde la referencia del año anterior
                     }
-                });
-
-                if (!response.ok) throw new Error("Error al obtener datos de Adalo");
-
-                const data = await response.json();
-
-                // Buscar el registro correcto por ID
-                const registro = data.records.find(item => item.id === id);
-                if (!registro) {
-                    console.error("No se encontró un registro con el ID:", id);
-                    return;
                 }
-
-                console.log("Datos del registro obtenido:", registro);
-
-                // Extraer valores de los meses y el valor de referencia
-                const valores = [
-                    registro.Enero, registro.Febrero, registro.Marzo, registro.Abril,
-                    registro.Mayo, registro.Junio, registro.Julio, registro.Agosto,
-                    registro.Septiembre, registro.Octubre, registro.Noviembre, registro.Diciembre
-                ];
-
-                const referencia = registro["Valor de referencia"] || 0;
-
-                renderChart(valores, referencia);
-            } catch (error) {
-                console.error("Error:", error);
             }
-        }
-
-        function renderChart(data, referencia) {
-            const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-                           "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-
-            const ctx = document.getElementById("myChart").getContext("2d");
-            new Chart(ctx, {
-                type: "line",
-                data: {
-                    labels: meses,
-                    datasets: [{
-                        label: "Registros Mensuales",
-                        data: data,
-                        borderColor: "blue",
-                        backgroundColor: "rgba(0, 0, 255, 0.2)",
-                        fill: true
-                    }]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: false,
-                            suggestedMin: referencia // Comienza desde la referencia del año anterior
-                        }
-                    }
-                }
-            });
-        }
-
-        // Llamar a la API de Adalo y mostrar los datos
-        fetchData();
+        });
     </script>
 </body>
 </html>
+
