@@ -14,7 +14,7 @@
         function getQueryParams() {
             const params = new URLSearchParams(window.location.search);
             return {
-                referencia: parseFloat(params.get("Valor de referencia")) || 0,
+                referencia: parseFloat(params.get("Valor de referencia")) || 100,
                 datos: [
                     parseFloat(params.get("Enero")) || 0,
                     parseFloat(params.get("Febrero")) || 0,
@@ -34,85 +34,96 @@
 
         // Obtener datos desde la URL
         const params = getQueryParams();
+        console.log("📊 Datos obtenidos de la URL:", params.datos);
+        console.log("📌 Valor de referencia:", params.referencia);
+
         const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-        const referenciaArray = new Array(12).fill(params.referencia); // Crea una línea horizontal con el valor de referencia
+        const referenciaArray = new Array(12).fill(params.referencia);
 
         // Crear un degradado de color para la gráfica
         function createGradient(ctx, chartArea) {
+            if (!chartArea) return "rgba(0, 123, 255, 0.5)";
             const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-            gradient.addColorStop(0, "rgba(0, 123, 255, 0.5)");  // Azul claro
-            gradient.addColorStop(1, "rgba(0, 123, 255, 0.1)");  // Azul más transparente
+            gradient.addColorStop(0, "rgba(0, 123, 255, 0.5)");
+            gradient.addColorStop(1, "rgba(0, 123, 255, 0.1)");
             return gradient;
         }
 
         const ctx = document.getElementById("myChart").getContext("2d");
 
-        // Crear la gráfica con un diseño moderno y la línea de referencia
-        const myChart = new Chart(ctx, {
-            type: "line",
-            data: {
-                labels: meses,
-                datasets: [
-                    {
-                        label: "Registros Mensuales",
-                        data: params.datos,
-                        borderColor: "#007bff",
-                        backgroundColor: (ctx) => createGradient(ctx.chart.ctx, ctx.chart.chartArea),
-                        fill: true,
-                        borderWidth: 3,
-                        pointRadius: 5,
-                        pointBackgroundColor: "#007bff",
-                        pointBorderColor: "#fff",
-                        tension: 0.3 // Hace la línea más curva y suave
-                    },
-                    {
-                        label: "Valor de Referencia",
-                        data: referenciaArray,
-                        borderColor: "#ff4d4d", // Rojo fuerte
-                        borderWidth: 2,
-                        borderDash: [8, 5], // Hace la línea punteada
-                        pointRadius: 0, // No mostrar puntos en la línea de referencia
-                        fill: false
-                    }
-                ]
-            },
-            options: {
-                plugins: {
-                    legend: {
-                        labels: {
-                            font: {
-                                size: 14
-                            }
+        // Esperar hasta que el gráfico pueda obtener el área de dibujo correctamente
+        function renderChart() {
+            const myChart = new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: meses,
+                    datasets: [
+                        {
+                            label: "Registros Mensuales",
+                            data: params.datos,
+                            borderColor: "#007bff",
+                            backgroundColor: (ctx) => createGradient(ctx.chart.ctx, ctx.chart.chartArea),
+                            fill: true,
+                            borderWidth: 3,
+                            pointRadius: 5,
+                            pointBackgroundColor: "#007bff",
+                            pointBorderColor: "#fff",
+                            tension: 0.3
+                        },
+                        {
+                            label: "Valor de Referencia",
+                            data: referenciaArray,
+                            borderColor: "#ff4d4d",
+                            borderWidth: 2,
+                            borderDash: [8, 5],
+                            pointRadius: 0,
+                            fill: false
                         }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function (context) {
-                                return `${context.dataset.label}: ${context.raw}`;
-                            }
-                        }
-                    }
+                    ]
                 },
-                scales: {
-                    y: {
-                        beginAtZero: false,
-                        suggestedMin: params.referencia * 0.8, // Ajusta la escala para una mejor visualización
-                        ticks: {
-                            font: {
-                                size: 14
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    return `${context.dataset.label}: ${context.raw}`;
+                                }
                             }
                         }
                     },
-                    x: {
-                        ticks: {
-                            font: {
-                                size: 12
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            suggestedMin: params.referencia * 0.8,
+                            ticks: {
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                font: {
+                                    size: 12
+                                }
                             }
                         }
                     }
                 }
-            }
-        });
+            });
+        }
+
+        // Esperar un pequeño tiempo para evitar errores con chartArea
+        setTimeout(renderChart, 500);
     </script>
 </body>
 </html>
