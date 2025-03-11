@@ -10,16 +10,16 @@
     <canvas id="myChart"></canvas>
 
     <script>
-        // Obtener valores de la URL
+        // Función para obtener los parámetros de la URL
         function getQueryParams() {
             const params = new URLSearchParams(window.location.search);
             return {
                 referencia: parseFloat(params.get("referencia")) || 0,  // Valor inicial del año anterior
-                datos: params.get("datos") ? params.get("datos").split(",").map(Number) : Array(12).fill(0) // Datos del año actual
+                datos: params.get("datos") ? params.get("datos").split(",").map(Number) : Array(12).fill(0) // Datos de los meses
             };
         }
 
-        // Datos de la URL
+        // Obtener datos de la URL
         const params = getQueryParams();
         const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
         
