@@ -10,42 +10,72 @@
     <canvas id="myChart"></canvas>
 
     <script>
-        // Función para obtener los parámetros de la URL
-        function getQueryParams() {
-            const params = new URLSearchParams(window.location.search);
-            return {
-                referencia: parseFloat(params.get("referencia")) || 0,  // Valor inicial del año anterior
-                datos: params.get("datos") ? params.get("datos").split(",").map(Number) : Array(12).fill(0) // Datos de los meses
-            };
+        // URL de la API de Adalo
+        const API_URL = "https://api.adalo.com/v0/apps/TU_APP_ID/collections/DB_Indicadores_2024";
+        const API_KEY = "TU_API_KEY";  // Reemplaza con tu clave de API de Adalo
+
+        async function fetchData() {
+            try {
+                const response = await fetch(API_URL, {
+                    headers: {
+                        "Authorization": `Bearer ${API_KEY}`,
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                if (!response.ok) throw new Error("Error al obtener datos de Adalo");
+
+                const data = await response.json();
+                console.log("Datos obtenidos de Adalo:", data);
+
+                // Suponemos que la colección tiene un solo registro con los valores de los meses
+                const registro = data.records[0];  // Primer registro
+
+                // Extraer valores de los meses
+                const valores = [
+                    registro.Enero, registro.Febrero, registro.Marzo, registro.Abril,
+                    registro.Mayo, registro.Junio, registro.Julio, registro.Agosto,
+                    registro.Septiembre, registro.Octubre, registro.Noviembre, registro.Diciembre
+                ];
+
+                const referencia = registro.Referencia || 0;  // Valor del año anterior
+
+                renderChart(valores, referencia);
+            } catch (error) {
+                console.error("Error:", error);
+            }
         }
 
-        // Obtener datos de la URL
-        const params = getQueryParams();
-        const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-        
-        // Crear la gráfica
-        const ctx = document.getElementById("myChart").getContext("2d");
-        new Chart(ctx, {
-            type: "line",
-            data: {
-                labels: meses,
-                datasets: [{
-                    label: "Registros Mensuales",
-                    data: params.datos,
-                    borderColor: "blue",
-                    backgroundColor: "rgba(0, 0, 255, 0.2)",
-                    fill: true
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: false,
-                        suggestedMin: params.referencia // Comienza desde la referencia del año anterior
+        function renderChart(data, referencia) {
+            const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                           "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+            const ctx = document.getElementById("myChart").getContext("2d");
+            new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: meses,
+                    datasets: [{
+                        label: "Registros Mensuales",
+                        data: data,
+                        borderColor: "blue",
+                        backgroundColor: "rgba(0, 0, 255, 0.2)",
+                        fill: true
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            suggestedMin: referencia // Comienza desde la referencia del año anterior
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
+
+        // Llamar a la API de Adalo y mostrar los datos
+        fetchData();
     </script>
 </body>
 </html>
