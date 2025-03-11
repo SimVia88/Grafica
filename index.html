@@ -10,12 +10,24 @@
     <canvas id="myChart"></canvas>
 
     <script>
-        // URL de la API de Adalo
+        // API de Adalo
         const API_URL = "https://api.adalo.com/v0/apps/02fb6ce2-46c4-4626-a4f6-a7747f66a2f0/collections/t_9l6kxc352ufl5bg89ag5j9etw";
-        const API_KEY = "TU_API_KEY";  // Reemplaza con tu clave de API de Adalo
+        const API_KEY = "uTihLh3enT2BN5A";  // Reemplaza con tu clave de API de Adalo
+
+        // Obtener el ID desde la URL
+        function getQueryParams() {
+            const params = new URLSearchParams(window.location.search);
+            return { id: params.get("id") };
+        }
 
         async function fetchData() {
             try {
+                const { id } = getQueryParams();
+                if (!id) {
+                    console.error("No se proporcionó un ID en la URL");
+                    return;
+                }
+
                 const response = await fetch(API_URL, {
                     headers: {
                         "Authorization": `Bearer ${API_KEY}`,
@@ -26,19 +38,24 @@
                 if (!response.ok) throw new Error("Error al obtener datos de Adalo");
 
                 const data = await response.json();
-                console.log("Datos obtenidos de Adalo:", data);
 
-                // Suponemos que la colección tiene un solo registro con los valores de los meses
-                const registro = data.records[0];  // Primer registro
+                // Buscar el registro correcto por ID
+                const registro = data.records.find(item => item.id === id);
+                if (!registro) {
+                    console.error("No se encontró un registro con el ID:", id);
+                    return;
+                }
 
-                // Extraer valores de los meses
+                console.log("Datos del registro obtenido:", registro);
+
+                // Extraer valores de los meses y el valor de referencia
                 const valores = [
                     registro.Enero, registro.Febrero, registro.Marzo, registro.Abril,
                     registro.Mayo, registro.Junio, registro.Julio, registro.Agosto,
                     registro.Septiembre, registro.Octubre, registro.Noviembre, registro.Diciembre
                 ];
 
-                const referencia = registro.Referencia || 0;  // Valor del año anterior
+                const referencia = registro["Valor de referencia"] || 0;
 
                 renderChart(valores, referencia);
             } catch (error) {
