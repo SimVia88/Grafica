@@ -38,42 +38,32 @@
         console.log("📌 Valor de referencia:", params.referencia);
 
         const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-        const referenciaArray = new Array(12).fill(params.referencia);
+        const referenciaArray = new Array(12).fill(params.referencia); // Línea de referencia
 
-        // Crear un degradado de color sin depender de chartArea
-        function createGradient(ctx) {
-            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-            gradient.addColorStop(0, "rgba(0, 123, 255, 0.5)");
-            gradient.addColorStop(1, "rgba(0, 123, 255, 0.1)");
-            return gradient;
-        }
+        // Asignar colores según comparación con la referencia
+        const barColors = params.datos.map(valor => valor >= params.referencia ? "green" : "red");
 
         const ctx = document.getElementById("myChart").getContext("2d");
 
-        // Crear la gráfica con una línea de referencia
-        const myChart = new Chart(ctx, {
-            type: "line",
+        // Crear la gráfica en barras con colores dinámicos
+        new Chart(ctx, {
+            type: "bar",
             data: {
                 labels: meses,
                 datasets: [
                     {
-                        label: "Registros Mensuales",
-                        data: params.datos,
-                        borderColor: "#007bff",
-                        backgroundColor: createGradient(ctx),
-                        fill: true,
-                        borderWidth: 3,
-                        pointRadius: 5,
-                        pointBackgroundColor: "#007bff",
-                        pointBorderColor: "#fff",
-                        tension: 0.3
+                        label: "Valores Mensuales",
+                        data: params.datos.map(valor => valor.toFixed(2)), // Mostrar valores con 2 decimales
+                        backgroundColor: barColors,
+                        borderColor: barColors,
+                        borderWidth: 1
                     },
                     {
                         label: "Valor de Referencia",
                         data: referenciaArray,
-                        borderColor: "#ff4d4d",
+                        type: "line",
+                        borderColor: "blue",
                         borderWidth: 2,
-                        borderDash: [8, 5],
                         pointRadius: 0,
                         fill: false
                     }
@@ -93,7 +83,7 @@
                     tooltip: {
                         callbacks: {
                             label: function (context) {
-                                return `${context.dataset.label}: ${context.raw}`;
+                                return `${context.dataset.label}: ${parseFloat(context.raw).toFixed(2)}`;
                             }
                         }
                     }
