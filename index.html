@@ -7,29 +7,24 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body style="display: flex; justify-content: center; align-items: center; height: 100vh; background: #f4f4f4; margin: 0;">
-    <canvas id="myChart" width="400" height="200"></canvas>
+    <canvas id="myChart" width="600" height="400"></canvas>
 
     <script>
         // Función para obtener los valores desde la URL
         function getQueryParams() {
             const params = new URLSearchParams(window.location.search);
-            return {
-                referencia: parseFloat(params.get("Valor de referencia")) || 100,
-                datos: [
-                    parseFloat(params.get("Enero")) || 0,
-                    parseFloat(params.get("Febrero")) || 0,
-                    parseFloat(params.get("Marzo")) || 0,
-                    parseFloat(params.get("Abril")) || 0,
-                    parseFloat(params.get("Mayo")) || 0,
-                    parseFloat(params.get("Junio")) || 0,
-                    parseFloat(params.get("Julio")) || 0,
-                    parseFloat(params.get("Agosto")) || 0,
-                    parseFloat(params.get("Septiembre")) || 0,
-                    parseFloat(params.get("Octubre")) || 0,
-                    parseFloat(params.get("Noviembre")) || 0,
-                    parseFloat(params.get("Diciembre")) || 0
-                ]
-            };
+
+            // Extraer el valor de referencia
+            const referencia = parseFloat(params.get("referencia")) || 0;
+
+            // Extraer valores de los meses con dos decimales
+            const mesesKeys = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+            const datos = mesesKeys.map(mes => {
+                const valor = parseFloat(params.get(mes));
+                return isNaN(valor) ? 0 : parseFloat(valor.toFixed(2)); // Si es NaN, asigna 0, y redondea a 2 decimales
+            });
+
+            return { referencia, datos };
         }
 
         // Obtener datos desde la URL
@@ -38,25 +33,34 @@
         console.log("📌 Valor de referencia:", params.referencia);
 
         const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-        const referenciaArray = new Array(12).fill(params.referencia); // Línea de referencia
+        const referenciaArray = new Array(12).fill(params.referencia);
 
-        // Asignar colores según comparación con la referencia
-        const barColors = params.datos.map(valor => valor >= params.referencia ? "green" : "red");
+        // Crear colores degradados y efectos visuales en las barras
+        function createGradient(ctx, color1, color2) {
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, color1);
+            gradient.addColorStop(1, color2);
+            return gradient;
+        }
 
         const ctx = document.getElementById("myChart").getContext("2d");
 
-        // Crear la gráfica en barras con colores dinámicos
+        // Generar colores degradados para cada barra
+        const barColors = params.datos.map(valor => valor >= params.referencia ? createGradient(ctx, "#00c853", "#66ffa6") : createGradient(ctx, "#d50000", "#ff8a80"));
+
+        // Crear la gráfica en barras con efecto 3D
         new Chart(ctx, {
             type: "bar",
             data: {
                 labels: meses,
                 datasets: [
                     {
-                        label: "Valores Mensuales",
-                        data: params.datos.map(valor => valor.toFixed(2)), // Mostrar valores con 2 decimales
+                        label: "Valores Mensuales (Verde = Mayor, Rojo = Menor)",
+                        data: params.datos,
                         backgroundColor: barColors,
-                        borderColor: barColors,
-                        borderWidth: 1
+                        borderColor: "#ccc",
+                        borderWidth: 1,
+                        barThickness: 30
                     },
                     {
                         label: "Valor de Referencia",
@@ -83,7 +87,7 @@
                     tooltip: {
                         callbacks: {
                             label: function (context) {
-                                return `${context.dataset.label}: ${parseFloat(context.raw).toFixed(2)}`;
+                                return `${context.dataset.label}: ${context.raw.toFixed(2)}`;
                             }
                         }
                     }
