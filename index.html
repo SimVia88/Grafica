@@ -56,10 +56,18 @@
                 labels: meses,
                 datasets: [
                     {
-                        label: "Valores Mensuales (Verde = Mayor, Rojo = Menor)",
+                        label: "Valor Mensual > ref.",
+                        data: params.datos, 
+                        backgroundColor: barColors,
+                        borderColor: "green",
+                        borderWidth: 1,
+                        barThickness: 30
+                    },
+                    {
+                        label: "Valor Mensual < ref.",
                         data: params.datos,
                         backgroundColor: barColors,
-                        borderColor: "#ccc",
+                        borderColor: "red",
                         borderWidth: 1,
                         barThickness: 30
                     },
