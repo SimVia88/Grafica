@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gráfica Mensual (Lineal con Relleno)</title>
+  <title>Gráfica Mensual Neutra</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
@@ -30,7 +30,6 @@
       const params = new URLSearchParams(window.location.search);
       return {
         referencia: parseFloat(params.get("referencia")) || 0,
-        criterio: params.get("criterio") || "AUM",
         datos: [
           parseFloat(params.get("enero")) || 0,
           parseFloat(params.get("febrero")) || 0,
@@ -54,14 +53,25 @@
 
     const ctx = document.getElementById("myChart").getContext("2d");
 
-    // Colores base
-    const colorLinea = params.criterio === "AUM" ? "#85CD7B" : "#F19595";
-    const colorFondo = params.criterio === "AUM" ? "rgba(133, 205, 123, 0.2)" : "rgba(241, 149, 149, 0.2)";
-
-    // Degradado para el fondo de la línea
+    // Crear degradado para el fondo debajo de la línea
     const gradientFill = ctx.createLinearGradient(0, 0, 0, 400);
-    gradientFill.addColorStop(0, colorFondo);
-    gradientFill.addColorStop(1, "rgba(255, 255, 255, 0)");
+    gradientFill.addColorStop(0, "rgba(0, 0, 0, 0.15)");
+    gradientFill.addColorStop(1, "rgba(0, 0, 0, 0)");
+
+    // Plugin para aplicar sombra al trazar la línea
+    const shadowPlugin = {
+      id: 'lineShadow',
+      beforeDraw: (chart) => {
+        const ctx = chart.ctx;
+        ctx.save();
+        ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
+        ctx.shadowBlur = 8;
+        ctx.shadowOffsetY = 4;
+      },
+      afterDraw: (chart) => {
+        chart.ctx.restore();
+      }
+    };
 
     new Chart(ctx, {
       type: "line",
@@ -73,9 +83,9 @@
             data: params.datos,
             fill: true,
             backgroundColor: gradientFill,
-            borderColor: colorLinea,
+            borderColor: "#000000",
             borderWidth: 3,
-            pointBackgroundColor: colorLinea,
+            pointBackgroundColor: "#000000",
             pointBorderColor: "#ffffff",
             pointRadius: 6,
             pointHoverRadius: 8,
@@ -117,7 +127,8 @@
             suggestedMin: Math.min(...params.datos, params.referencia) * 0.8
           }
         }
-      }
+      },
+      plugins: [shadowPlugin]
     });
   </script>
 </body>
