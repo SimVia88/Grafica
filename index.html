@@ -1,95 +1,17 @@
 <!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
-
-  <title>Gráfica mensual de seguimiento</title>
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    html,
-    body {
-      width: 100%;
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      background-color: transparent;
-      font-family: Arial, sans-serif;
-    }
-
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    #contenedor {
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      height: auto;
-      max-height: 100%;
-      padding: clamp(5px, 1.4vw, 18px);
-      position: relative;
-      min-width: 0;
-      min-height: 0;
-    }
-
-    #contenedor { display: flex; flex-direction: column; }
-    #grafica-area { flex: 1 1 auto; min-height: 0; min-width: 0; position: relative; }
-    canvas { width: 100% !important; height: 100% !important; display: block; }
-    #leyenda-movil { display: none; }
-    @media (max-width: 679px) {
-      #leyenda-movil {
-        display: flex; flex: 0 0 auto; justify-content: center;
-        align-items: center; gap: 13px; padding: 1px 0 4px;
-        white-space: nowrap; font-size: clamp(8px, 2.3vw, 11px);
-        font-weight: 700; color: #263746;
-      }
-      .elemento-leyenda { display: inline-flex; align-items: center; gap: 5px; }
-      .punto-leyenda { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; }
-      .punto-negro { background: #000; }
-      .punto-azul { background: #1e40ff; }
-    }
-  </style>
-</head>
-
-<body>
-
-  <div id="contenedor">
-    <div id="leyenda-movil" aria-label="Leyenda de la gráfica">
-      <span class="elemento-leyenda"><span class="punto-leyenda punto-negro"></span>Valores mensuales</span>
-      <span class="elemento-leyenda"><span class="punto-leyenda punto-azul"></span>Valor de referencia</span>
-    </div>
-    <div id="grafica-area"><canvas id="myChart"></canvas></div>
-  </div>
-
-  <script>
-    /*
-     * ==========================================================
-     * CONFIGURACIÓN DE UNIDADES E IDs
-     * ==========================================================
-     *
-     * Añade cada nueva ID dentro de la unidad correspondiente.
-     *
-     * Las IDs incluidas en "L/km":
-     * - Se dividen entre 10.000.
-     * - Se muestran con 4 decimales.
-     *
-     * Las demás IDs:
-     * - Se dividen entre 100.
-     * - Se muestran con 2 decimales.
-     */
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Gráfica de seguimiento</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#E1E8ED;font-family:"Segoe UI",Arial,sans-serif;overflow:hidden}
+body{display:flex;align-items:center;justify-content:center}
+.chart-shell{width:100%;max-height:100%;aspect-ratio:16/9;position:relative;padding:18px;display:flex;flex-direction:column;min-height:0}
+.mobile-legend{display:none;align-items:center;justify-content:center;gap:13px;white-space:nowrap;flex-shrink:0;color:#263746;font-size:10px;font-weight:650;padding:0 0 5px}
+.legend-item{display:inline-flex;align-items:center;gap:5px}.dot{width:8px;height:8px;border-radius:50%;display:inline-block}.dot-values{background:#5FD475}.dot-ref{background:#1e40ff}
+.chart-area{position:relative;flex:1;min-height:0;min-width:0}.chart-area canvas{display:block;width:100%!important;height:100%!important}
+@media(max-width:600px){.chart-shell{padding:5px 6px 5px}.mobile-legend{display:flex}}
+@media(max-width:340px){.mobile-legend{font-size:9px;gap:8px}.legend-item{gap:3px}}
+</style></head><body><main class="chart-shell"><div class="mobile-legend" aria-label="Leyenda"><span class="legend-item"><span class="dot dot-values"></span>Valores de seguimiento</span><span class="legend-item"><span class="dot dot-ref"></span>Valor de referencia</span></div><div class="chart-area"><canvas id="myChart" role="img" aria-label="Seguimiento semestral y referencia"></canvas></div></main>
+<script>
     const simbolosConfig = {
       "%": [
         46, 45, 29, 28, 27, 17, 16, 15, 2, 1
@@ -112,14 +34,17 @@
       ],
 
       /*
-       * AÑADE AQUÍ todas las IDs de los indicadores
-       * que deban expresarse en litros por kilómetro.
+       * Añade aquí todas las IDs de los indicadores
+       * expresados en litros por kilómetro.
        */
       "L/km": [
         32, 20, 7
       ]
     };
 
+    /*
+     * Obtiene la unidad asociada a la ID.
+     */
     function obtenerSimboloDesdeID(id) {
       for (const [simbolo, ids] of Object.entries(simbolosConfig)) {
         if (ids.includes(id)) {
@@ -130,22 +55,44 @@
       return "";
     }
 
+    /*
+     * Solo L/km constituye una excepción:
+     * divide entre 10.000.
+     *
+     * Todo lo demás divide entre 100.
+     */
     function obtenerDivisorDesdeID(id) {
-      const simbolo = obtenerSimboloDesdeID(id);
+      const simbolo =
+        obtenerSimboloDesdeID(id);
 
       return simbolo === "L/km"
         ? 10000
         : 100;
     }
 
+    /*
+     * L/km se muestra con cuatro decimales.
+     * El resto, con dos.
+     */
     function obtenerDecimalesDesdeID(id) {
-      const simbolo = obtenerSimboloDesdeID(id);
+      const simbolo =
+        obtenerSimboloDesdeID(id);
 
       return simbolo === "L/km"
         ? 4
         : 2;
     }
 
+    /*
+     * Convierte de forma segura el texto recibido desde Adalo.
+     *
+     * Admite, entre otros:
+     * 1225
+     * 1,225
+     * 1.225
+     * 12,25
+     * 12.25
+     */
     function obtenerNumero(valor) {
       if (
         valor === null ||
@@ -185,24 +132,43 @@
         texto = texto.replace(",", ".");
       }
 
-      const numero = Number.parseFloat(texto);
+      const numero =
+        Number.parseFloat(texto);
 
       return Number.isFinite(numero)
         ? numero
         : 0;
     }
 
+    /*
+     * Convierte el dato escalado de Adalo
+     * al valor real que debe mostrar la gráfica.
+     */
     function convertir(valor, divisor) {
       return obtenerNumero(valor) / divisor;
     }
 
+    /*
+     * Obtiene todos los parámetros enviados desde Adalo.
+     *
+     * La URL debe contener:
+     * referencia
+     * seguimiento1
+     * seguimiento2
+     * criterio
+     * id
+     */
     function getQueryParams() {
-      const params = new URLSearchParams(
-        window.location.search
-      );
+      const urlParams =
+        new URLSearchParams(
+          window.location.search
+        );
 
       const id =
-        Number.parseInt(params.get("id"), 10) || null;
+        Number.parseInt(
+          urlParams.get("id"),
+          10
+        ) || null;
 
       const divisor =
         obtenerDivisorDesdeID(id);
@@ -213,370 +179,87 @@
       const simbolo =
         obtenerSimboloDesdeID(id);
 
+      const criterio =
+        (
+          urlParams.get("criterio") || "AUM"
+        )
+          .trim()
+          .toUpperCase();
+
       return {
         id: id,
         divisor: divisor,
         decimales: decimales,
         simbolo: simbolo,
+        criterio: criterio,
 
         referencia: convertir(
-          params.get("referencia"),
+          urlParams.get("referencia"),
           divisor
         ),
 
-        datos: [
-          convertir(params.get("enero"), divisor),
-          convertir(params.get("febrero"), divisor),
-          convertir(params.get("marzo"), divisor),
-          convertir(params.get("abril"), divisor),
-          convertir(params.get("mayo"), divisor),
-          convertir(params.get("junio"), divisor),
-          convertir(params.get("julio"), divisor),
-          convertir(params.get("agosto"), divisor),
-          convertir(params.get("septiembre"), divisor),
-          convertir(params.get("octubre"), divisor),
-          convertir(params.get("noviembre"), divisor),
-          convertir(params.get("diciembre"), divisor)
-        ]
+        seguimiento1: convertir(
+          urlParams.get("seguimiento1"),
+          divisor
+        ),
+
+        seguimiento2: convertir(
+          urlParams.get("seguimiento2"),
+          divisor
+        )
       };
     }
 
-    const params = getQueryParams();
 
-    // La anchura REAL del WebView determina la tipografía y los márgenes.
-    // Mantiene el aspecto original en escritorio.
-    const contenedor = document.getElementById("contenedor");
-    const ancho = window.innerWidth;
-    const movil = ancho < 680;
-    const compacto = ancho < 480;
-    const ajustar = (desktop, mobile, small) => compacto ? small : (movil ? mobile : desktop);
-
-
-    const meses = [
-      "Enero",
-      "Febrero",
-      "Marzo",
-      "Abril",
-      "Mayo",
-      "Junio",
-      "Julio",
-      "Agosto",
-      "Septiembre",
-      "Octubre",
-      "Noviembre",
-      "Diciembre"
-    ];
-
-    const referenciaArray =
-      meses.map(() => params.referencia);
-
-    const ctx =
-      document
-        .getElementById("myChart")
-        .getContext("2d");
-
-    const gradientFill =
-      ctx.createLinearGradient(0, 0, 0, 500);
-
-    gradientFill.addColorStop(
-      0,
-      "rgba(0, 0, 0, 0.15)"
-    );
-
-    gradientFill.addColorStop(
-      1,
-      "rgba(0, 0, 0, 0)"
-    );
-
-    const shadowPlugin = {
-      id: "lineShadow",
-
-      beforeDatasetDraw(chart, args) {
-        if (args.index !== 0) {
-          return;
-        }
-
-        const contexto = chart.ctx;
-
-        contexto.save();
-        contexto.shadowColor =
-          "rgba(0, 0, 0, 0.25)";
-        contexto.shadowBlur = 8;
-        contexto.shadowOffsetY = 4;
-      },
-
-      afterDatasetDraw(chart, args) {
-        if (args.index !== 0) {
-          return;
-        }
-
-        chart.ctx.restore();
-      }
-    };
-
-    const todosLosValores = [
-      ...params.datos,
-      params.referencia
-    ].filter(valor => Number.isFinite(valor));
-
-    const maxValor =
-      Math.max(...todosLosValores, 0);
-
-    const minValor =
-      Math.min(...todosLosValores, 0);
-
-    const margen =
-      maxValor === minValor
-        ? Math.max(Math.abs(maxValor) * 0.2, 0.01)
-        : (maxValor - minValor) * 0.15;
-
-    const suggestedMin =
-      Math.max(0, minValor - margen);
-
-    const suggestedMax =
-      maxValor + margen;
-
-    // Evita que varios niveles del eje Y aparezcan con el mismo texto
-    // (por ejemplo 0.00, 0.01, 0.01 cuando todos los datos son cero).
-    const rangoVisible = Math.max(suggestedMax - suggestedMin, 0.000001);
-    const decimalesEje = Math.min(8, Math.max(
-      params.decimales,
-      Math.ceil(-Math.log10(rangoVisible / 6))
-    ));
-
-    const grafica = new Chart(ctx, {
-      type: "line",
-
-      data: {
-        labels: meses,
-
-        datasets: [
-          {
-            label: "Valores mensuales",
-            data: params.datos,
-
-            fill: true,
-            backgroundColor: gradientFill,
-
-            borderColor: "#000000",
-            borderWidth: ajustar(5, 3, 2.5),
-
-            pointBackgroundColor: "#000000",
-            pointBorderColor: "#ffffff",
-            pointBorderWidth: ajustar(3, 2, 1.5),
-
-            pointRadius: ajustar(7, 4, 3),
-            pointHoverRadius: ajustar(10, 6, 5),
-
-            tension: 0.3,
-            spanGaps: false
-          },
-
-          {
-            label: "Valor de referencia",
-            data: referenciaArray,
-
-            fill: false,
-
-            borderColor: "#1e40ff",
-            backgroundColor: "#1e40ff",
-
-            borderWidth: ajustar(4, 2.5, 2),
-            borderDash: [10, 8],
-
-            pointRadius: 0,
-            pointHoverRadius: 0,
-
-            tension: 0
-          }
-        ]
-      },
-
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2),
-
-        interaction: {
-          mode: "index",
-          intersect: false
-        },
-
-        layout: {
-          padding: {
-            top: ajustar(26, 8, 4),
-            right: ajustar(34, 8, 2),
-            bottom: ajustar(26, 8, 2),
-            left: ajustar(34, 8, 2)
-          }
-        },
-
-        plugins: {
-          legend: {
-            display: !movil,
-            position: "top",
-
-            labels: {
-              color: "#263746",
-              usePointStyle: true,
-              pointStyle: "circle",
-              boxWidth: ajustar(16, 8, 6),
-              boxHeight: ajustar(16, 8, 6),
-              padding: ajustar(24, 7, 4),
-
-              font: {
-                size: ajustar(20, 11, 9),
-                weight: "bold"
-              }
-            }
-          },
-
-          tooltip: {
-            padding: 16,
-            titleColor: "#ffffff",
-            bodyColor: "#ffffff",
-            backgroundColor: "rgba(38, 55, 70, 0.96)",
-            displayColors: true,
-
-            titleFont: {
-              size: 18,
-              weight: "bold"
-            },
-
-            bodyFont: {
-              size: 17,
-              weight: "bold"
-            },
-
-            callbacks: {
-              label(context) {
-                const valor =
-                  Number(context.raw);
-
-                const valorFormateado =
-                  valor.toFixed(params.decimales);
-
-                const unidad =
-                  params.simbolo
-                    ? " " + params.simbolo
-                    : "";
-
-                return (
-                  context.dataset.label +
-                  ": " +
-                  valorFormateado +
-                  unidad
-                );
-              }
-            }
-          }
-        },
-
-        scales: {
-          x: {
-            grid: {
-              display: false
-            },
-
-            border: {
-              color: "rgba(38, 55, 70, 0.45)",
-              width: 2
-            },
-
-            ticks: {
-              color: "#263746",
-              padding: ajustar(14, 5, 3),
-              maxRotation: 0,
-              minRotation: 0,
-              autoSkip: true,
-              maxTicksLimit: ajustar(12, 7, 6),
-              callback(value) {
-                const etiqueta = this.getLabelForValue(value);
-                return movil ? etiqueta.substring(0, 3) : etiqueta;
-              },
-
-              font: {
-                size: ajustar(17, 10, 9),
-                weight: "bold"
-              }
-            }
-          },
-
-          y: {
-            beginAtZero: false,
-            suggestedMin: suggestedMin,
-            suggestedMax: suggestedMax,
-
-            border: {
-              color: "rgba(38, 55, 70, 0.45)",
-              width: 2
-            },
-
-            grid: {
-              color: "rgba(38, 55, 70, 0.14)",
-              lineWidth: 1.5
-            },
-
-            ticks: {
-              color: "#263746",
-              padding: ajustar(14, 4, 2),
-              maxTicksLimit: movil ? 6 : 7,
-              count: movil ? 6 : undefined,
-              autoSkip: false,
-
-              font: {
-                size: ajustar(17, 9, 8),
-                weight: "bold"
-              },
-
-              callback(value) {
-                return Number(value).toFixed(decimalesEje);
-              }
-            },
-
-            title: {
-              display: Boolean(params.simbolo),
-              text: params.simbolo,
-              color: "#263746",
-              padding: {
-                bottom: 14
-              },
-
-              font: {
-                size: ajustar(19, 11, 9),
-                weight: "bold"
-              }
-            }
-          }
-        }
-      },
-
-      plugins: [
-        shadowPlugin
-      ]
-    });
-
-    // Sincroniza la leyenda de Chart.js con la leyenda HTML al redimensionar.
-    // El valor calculado durante la carga no basta si la ventana cambia de tamaño.
-    let ultimaVistaMovil = null;
-    function sincronizarVista() {
-      const anchoActual = window.innerWidth;
-      const esMovil = anchoActual < 680;
-      const esCompacto = anchoActual < 480;
-      if (esMovil === ultimaVistaMovil) return;
-      ultimaVistaMovil = esMovil;
-      grafica.options.plugins.legend.display = !esMovil;
-      grafica.options.layout.padding = esMovil
-        ? { top: 4, right: 3, bottom: 3, left: 3 }
-        : { top: 26, right: 34, bottom: 26, left: 34 };
-      grafica.options.scales.x.ticks.font.size = esMovil ? (esCompacto ? 9 : 11) : 17;
-      grafica.options.scales.y.ticks.font.size = esMovil ? (esCompacto ? 9 : 11) : 17;
-      grafica.options.scales.y.ticks.maxTicksLimit = esMovil ? 6 : 7;
-      grafica.update('none');
-    }
-    window.addEventListener('resize', sincronizarVista, { passive: true });
-    sincronizarVista();
-  </script>
-
-</body>
-</html>
+const params=getQueryParams();
+const etiquetas=["Seguimiento 1.er semestre","Seguimiento 2.º semestre"];
+const datos=[params.seguimiento1,params.seguimiento2];
+const colores=datos.map(v=>params.criterio==="AUM"?(v>=params.referencia?"#5FD475":"#F19595"):params.criterio==="DIS"?(v<=params.referencia?"#5FD475":"#F19595"):"#A0A0A0");
+const ctx=document.getElementById("myChart").getContext("2d");
+const valores=[...datos,params.referencia];
+const max=Math.max(0,...valores),min=Math.min(0,...valores);
+const margen=max===min?Math.max(Math.abs(max)*.2,params.simbolo==="L/km"?.005:.01):(max-min)*.2;
+const suggestedMin=Math.max(0,min-margen),suggestedMax=max+margen;
+const referenciaExtendida={id:"referenciaExtendida",afterDatasetsDraw(chart){
+  const {ctx,chartArea,scales}=chart;if(!chartArea||!scales.y)return;
+  const y=scales.y.getPixelForValue(params.referencia);if(y<chartArea.top||y>chartArea.bottom)return;
+  ctx.save();ctx.strokeStyle="#1e40ff";ctx.lineWidth=chart.width<=600?2.5:5;
+  ctx.beginPath();ctx.moveTo(chartArea.left,y);ctx.lineTo(chartArea.right,y);ctx.stroke();ctx.restore();
+}};
+const chart=new Chart(ctx,{
+ type:"bar",data:{labels:etiquetas,datasets:[
+  {label:"Valores de seguimiento",data:datos,backgroundColor:colores,borderColor:colores,borderWidth:2,borderRadius:14,barPercentage:.7,categoryPercentage:.82,maxBarThickness:140},
+  {label:"Valor de referencia",type:"line",data:[params.referencia,params.referencia],borderColor:"#1e40ff",backgroundColor:"#1e40ff",borderWidth:0,pointRadius:0,pointHoverRadius:0,fill:false}
+ ]},
+ plugins:[referenciaExtendida],
+ options:{responsive:true,maintainAspectRatio:false,devicePixelRatio:Math.min(window.devicePixelRatio||1,2),
+ interaction:{mode:"index",intersect:false},
+ layout:{padding:{top:20,right:24,bottom:20,left:24}},
+ plugins:{legend:{position:"top",display:true,labels:{color:"#263746",usePointStyle:true,pointStyle:"circle",boxWidth:18,boxHeight:18,padding:24,font:{size:19,weight:"bold"}}},
+ tooltip:{padding:12,backgroundColor:"rgba(38,55,70,.96)",titleColor:"#fff",bodyColor:"#fff",callbacks:{label(c){return c.dataset.label+": "+Number(c.raw).toFixed(params.decimales)+(params.simbolo?" "+params.simbolo:"");}}}},
+ scales:{x:{grid:{display:false},border:{color:"rgba(38,55,70,.45)",width:2},ticks:{color:"#263746",padding:14,maxRotation:0,minRotation:0,font:{size:18,weight:"bold"}}},
+ y:{beginAtZero:false,suggestedMin,suggestedMax,border:{color:"rgba(38,55,70,.45)",width:2},grid:{color:"rgba(38,55,70,.13)",lineWidth:1.5},ticks:{color:"#263746",padding:12,font:{size:17,weight:"bold"},maxTicksLimit:6,callback(value){const n=Number(value);let d=params.decimales;const ticks=this.getTicks();if(ticks.length>1){const step=Math.abs(ticks[1].value-ticks[0].value);while(d<6&&step>0&&Number(step.toFixed(d))===0)d++;}return n.toFixed(d);}},title:{display:Boolean(params.simbolo),text:params.simbolo,color:"#263746",padding:{bottom:12},font:{size:19,weight:"bold"}}}}
+ }});
+function ajustar(){
+ const ancho=document.querySelector('.chart-shell').getBoundingClientRect().width;
+ const movil=ancho<=600;
+ const muyEstrecho=ancho<=380;
+ chart.options.plugins.legend.display=!movil;
+ chart.options.layout.padding=movil?{top:5,right:6,bottom:4,left:3}:{top:20,right:24,bottom:20,left:24};
+ chart.options.scales.x.ticks.font.size=movil?(muyEstrecho?10:12):18;
+ chart.options.scales.x.ticks.padding=movil?5:14;
+ chart.options.scales.x.ticks.callback=function(value){const label=this.getLabelForValue(value);if(!movil)return label;return value===0?["1.er","semestre"]:["2.º","semestre"];};
+ chart.options.scales.y.ticks.font.size=movil?10:17;
+ chart.options.scales.y.ticks.padding=movil?5:12;
+ chart.options.scales.y.ticks.maxTicksLimit=movil?6:7;
+ chart.options.scales.y.title.font.size=movil?11:19;
+ chart.options.scales.y.title.padding={bottom:movil?4:12};
+ chart.options.plugins.tooltip.titleFont={size:movil?12:18,weight:"bold"};
+ chart.options.plugins.tooltip.bodyFont={size:movil?12:17,weight:"bold"};
+ chart.update('none');
+}
+let lastWidth=0;
+const observer=new ResizeObserver(entries=>{const w=Math.round(entries[0].contentRect.width);if(w!==lastWidth){lastWidth=w;ajustar();}});
+observer.observe(document.querySelector('.chart-shell'));
+ajustar();
+</script></body></html>
