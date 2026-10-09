@@ -36,8 +36,13 @@
 
     #contenedor {
       width: 100%;
-      height: 100%;
-      padding: 18px;
+      aspect-ratio: 16 / 9;
+      height: auto;
+      max-height: 100%;
+      padding: clamp(5px, 1.4vw, 18px);
+      position: relative;
+      min-width: 0;
+      min-height: 0;
     }
 
     canvas {
@@ -223,6 +228,15 @@
 
     const params = getQueryParams();
 
+    // La anchura REAL del WebView determina la tipografía y los márgenes.
+    // Mantiene el aspecto original en escritorio.
+    const contenedor = document.getElementById("contenedor");
+    const ancho = contenedor.clientWidth;
+    const movil = ancho < 560;
+    const compacto = ancho < 380;
+    const ajustar = (desktop, mobile, small) => compacto ? small : (movil ? mobile : desktop);
+
+
     const meses = [
       "Enero",
       "Febrero",
@@ -322,14 +336,14 @@
             backgroundColor: gradientFill,
 
             borderColor: "#000000",
-            borderWidth: 5,
+            borderWidth: ajustar(5, 3, 2.5),
 
             pointBackgroundColor: "#000000",
             pointBorderColor: "#ffffff",
-            pointBorderWidth: 3,
+            pointBorderWidth: ajustar(3, 2, 1.5),
 
-            pointRadius: 7,
-            pointHoverRadius: 10,
+            pointRadius: ajustar(7, 4, 3),
+            pointHoverRadius: ajustar(10, 6, 5),
 
             tension: 0.3,
             spanGaps: false
@@ -344,7 +358,7 @@
             borderColor: "#1e40ff",
             backgroundColor: "#1e40ff",
 
-            borderWidth: 4,
+            borderWidth: ajustar(4, 2.5, 2),
             borderDash: [10, 8],
 
             pointRadius: 0,
@@ -358,7 +372,7 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        devicePixelRatio: 2,
+        devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2),
 
         interaction: {
           mode: "index",
@@ -367,10 +381,10 @@
 
         layout: {
           padding: {
-            top: 26,
-            right: 34,
-            bottom: 26,
-            left: 34
+            top: ajustar(26, 8, 4),
+            right: ajustar(34, 8, 2),
+            bottom: ajustar(26, 8, 2),
+            left: ajustar(34, 8, 2)
           }
         },
 
@@ -382,12 +396,12 @@
               color: "#263746",
               usePointStyle: true,
               pointStyle: "circle",
-              boxWidth: 16,
-              boxHeight: 16,
-              padding: 24,
+              boxWidth: ajustar(16, 9, 7),
+              boxHeight: ajustar(16, 9, 7),
+              padding: ajustar(24, 9, 5),
 
               font: {
-                size: 20,
+                size: ajustar(20, 12, 10),
                 weight: "bold"
               }
             }
@@ -447,12 +461,18 @@
 
             ticks: {
               color: "#263746",
-              padding: 14,
+              padding: ajustar(14, 5, 3),
               maxRotation: 0,
               minRotation: 0,
+              autoSkip: true,
+              maxTicksLimit: ajustar(12, 7, 6),
+              callback(value) {
+                const etiqueta = this.getLabelForValue(value);
+                return movil ? etiqueta.substring(0, 3) : etiqueta;
+              },
 
               font: {
-                size: 17,
+                size: ajustar(17, 11, 10),
                 weight: "bold"
               }
             }
@@ -475,10 +495,10 @@
 
             ticks: {
               color: "#263746",
-              padding: 14,
+              padding: ajustar(14, 5, 3),
 
               font: {
-                size: 17,
+                size: ajustar(17, 11, 10),
                 weight: "bold"
               },
 
@@ -498,7 +518,7 @@
               },
 
               font: {
-                size: 19,
+                size: ajustar(19, 12, 10),
                 weight: "bold"
               }
             }
