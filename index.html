@@ -45,10 +45,21 @@
       min-height: 0;
     }
 
-    canvas {
-      width: 100% !important;
-      height: 100% !important;
-      display: block;
+    #contenedor { display: flex; flex-direction: column; }
+    #grafica-area { flex: 1 1 auto; min-height: 0; min-width: 0; position: relative; }
+    canvas { width: 100% !important; height: 100% !important; display: block; }
+    #leyenda-movil { display: none; }
+    @media (max-width: 679px) {
+      #leyenda-movil {
+        display: flex; flex: 0 0 auto; justify-content: center;
+        align-items: center; gap: 13px; padding: 1px 0 4px;
+        white-space: nowrap; font-size: clamp(8px, 2.3vw, 11px);
+        font-weight: 700; color: #263746;
+      }
+      .elemento-leyenda { display: inline-flex; align-items: center; gap: 5px; }
+      .punto-leyenda { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; }
+      .punto-negro { background: #000; }
+      .punto-azul { background: #1e40ff; }
     }
   </style>
 </head>
@@ -56,7 +67,11 @@
 <body>
 
   <div id="contenedor">
-    <canvas id="myChart"></canvas>
+    <div id="leyenda-movil" aria-label="Leyenda de la gráfica">
+      <span class="elemento-leyenda"><span class="punto-leyenda punto-negro"></span>Valores mensuales</span>
+      <span class="elemento-leyenda"><span class="punto-leyenda punto-azul"></span>Valor de referencia</span>
+    </div>
+    <div id="grafica-area"><canvas id="myChart"></canvas></div>
   </div>
 
   <script>
@@ -231,9 +246,9 @@
     // La anchura REAL del WebView determina la tipografía y los márgenes.
     // Mantiene el aspecto original en escritorio.
     const contenedor = document.getElementById("contenedor");
-    const ancho = contenedor.clientWidth;
-    const movil = ancho < 560;
-    const compacto = ancho < 380;
+    const ancho = window.innerWidth;
+    const movil = ancho < 680;
+    const compacto = ancho < 480;
     const ajustar = (desktop, mobile, small) => compacto ? small : (movil ? mobile : desktop);
 
 
@@ -321,7 +336,15 @@
     const suggestedMax =
       maxValor + margen;
 
-    new Chart(ctx, {
+    // Evita que varios niveles del eje Y aparezcan con el mismo texto
+    // (por ejemplo 0.00, 0.01, 0.01 cuando todos los datos son cero).
+    const rangoVisible = Math.max(suggestedMax - suggestedMin, 0.000001);
+    const decimalesEje = Math.min(8, Math.max(
+      params.decimales,
+      Math.ceil(-Math.log10(rangoVisible / 6))
+    ));
+
+    const grafica = new Chart(ctx, {
       type: "line",
 
       data: {
@@ -390,18 +413,19 @@
 
         plugins: {
           legend: {
+            display: !movil,
             position: "top",
 
             labels: {
               color: "#263746",
               usePointStyle: true,
               pointStyle: "circle",
-              boxWidth: ajustar(16, 9, 7),
-              boxHeight: ajustar(16, 9, 7),
-              padding: ajustar(24, 9, 5),
+              boxWidth: ajustar(16, 8, 6),
+              boxHeight: ajustar(16, 8, 6),
+              padding: ajustar(24, 7, 4),
 
               font: {
-                size: ajustar(20, 12, 10),
+                size: ajustar(20, 11, 9),
                 weight: "bold"
               }
             }
@@ -472,7 +496,7 @@
               },
 
               font: {
-                size: ajustar(17, 11, 10),
+                size: ajustar(17, 10, 9),
                 weight: "bold"
               }
             }
@@ -495,17 +519,18 @@
 
             ticks: {
               color: "#263746",
-              padding: ajustar(14, 5, 3),
+              padding: ajustar(14, 4, 2),
+              maxTicksLimit: movil ? 6 : 7,
+              count: movil ? 6 : undefined,
+              autoSkip: false,
 
               font: {
-                size: ajustar(17, 11, 10),
+                size: ajustar(17, 9, 8),
                 weight: "bold"
               },
 
               callback(value) {
-                return Number(value).toFixed(
-                  params.decimales
-                );
+                return Number(value).toFixed(decimalesEje);
               }
             },
 
@@ -518,7 +543,7 @@
               },
 
               font: {
-                size: ajustar(19, 12, 10),
+                size: ajustar(19, 11, 9),
                 weight: "bold"
               }
             }
@@ -530,6 +555,27 @@
         shadowPlugin
       ]
     });
+
+    // Sincroniza la leyenda de Chart.js con la leyenda HTML al redimensionar.
+    // El valor calculado durante la carga no basta si la ventana cambia de tamaño.
+    let ultimaVistaMovil = null;
+    function sincronizarVista() {
+      const anchoActual = window.innerWidth;
+      const esMovil = anchoActual < 680;
+      const esCompacto = anchoActual < 480;
+      if (esMovil === ultimaVistaMovil) return;
+      ultimaVistaMovil = esMovil;
+      grafica.options.plugins.legend.display = !esMovil;
+      grafica.options.layout.padding = esMovil
+        ? { top: 4, right: 3, bottom: 3, left: 3 }
+        : { top: 26, right: 34, bottom: 26, left: 34 };
+      grafica.options.scales.x.ticks.font.size = esMovil ? (esCompacto ? 9 : 11) : 17;
+      grafica.options.scales.y.ticks.font.size = esMovil ? (esCompacto ? 9 : 11) : 17;
+      grafica.options.scales.y.ticks.maxTicksLimit = esMovil ? 6 : 7;
+      grafica.update('none');
+    }
+    window.addEventListener('resize', sincronizarVista, { passive: true });
+    sincronizarVista();
   </script>
 
 </body>
